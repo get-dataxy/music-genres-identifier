@@ -1,14 +1,18 @@
 import os
 import sys
 import logging
+import pandas as pd
 
 
 class Mgi:
     name = "MGI"
 
-    def __init__(self, spath, mpath, log_level=logging.INFO, log_format=None):
+    def __init__(self, spath, mpath, dpath='./data', log_level=logging.INFO, log_format=None):
         self.spath = spath
         self.mpath = mpath
+        self.dpath = dpath
+        self.df = None
+        self.songs_pth = []
         self.format = log_format
         self.logger = self.set_logger_level(log_level)
 
@@ -33,6 +37,11 @@ class Mgi:
             return True
         self.logger.error("Invalid file path: {}".format(fpath))
         return False
+    
+    def _create_if_not_exist(self, dpath):
+        if not self._is_valid_path(dpath):
+            # TODO: create the dpath
+            pass
 
     def read_metadata(self, filename):
         self.logger.debug("Checking the metadata path valid or not")
@@ -47,6 +56,11 @@ class Mgi:
             return
 
         self.logger.info("Reading metadata using pandas")
+        self.df = pd.read_csv(file_path, header=None, error_bad_lines=False)
+
+    def songs(self, path, songs_type='.mp3'):
+        for dirpath, subdirs, files in os.walk(path):
+            self.songs_pth.extend(os.path.join(dirpath, x) for x in files if x.endswith(songs_type))
 
     def read_songs(self, format='wav'):
         self.logger.debug("Checking the songs path valid or not")
@@ -54,7 +68,13 @@ class Mgi:
             self.logger.error("Exiting")
             return
 
+        self._create_if_not_exist(self.dpath)
         self.logger.info("Reading songs using librosa")
+        self.songs(self.spath)
+        for each in self.songs_pth:
+            print(each)
+            # TODO: need to read the librosa files
+            # TODO: need to store the chromagrams
 
 def main(songs_path, metadata_path):
     csv_file = 'tracks.csv'
