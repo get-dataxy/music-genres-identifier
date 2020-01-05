@@ -1,1 +1,4 @@
 pandas==0.24.2
+pathlib2==2.3.3
+librosa==0.7.1
+matplotlib==3.0.3

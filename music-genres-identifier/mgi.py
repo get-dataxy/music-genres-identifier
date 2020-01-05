@@ -2,31 +2,51 @@ import os
 import sys
 import logging
 import pandas as pd
+import librosa as lb
+import librosa.display
+import matplotlib.pyplot as plt
+import warnings
+
+from pathlib import Path
+
 
 
 class Mgi:
     name = "MGI"
 
-    def __init__(self, spath, mpath, dpath='./data', log_level=logging.INFO, log_format=None):
-        self.spath = spath
-        self.mpath = mpath
-        self.dpath = dpath
+    def __init__(self, spath, mpath, dpath='./data', use_abs=False, log_level=logging.INFO, log_format=None, warnings_suppress=True):
         self.df = None
         self.songs_pth = []
         self.format = log_format
-        self.logger = self.set_logger_level(log_level)
+        self.warnings_suppress = warnings_suppress
+        self.logger = self._set_logger_level(log_level, warnings_suppress)
+        self._set_paths(spath, mpath, dpath, use_abs)
 
-    def set_logger_level(self, log_level):
+    def _set_paths(self, spath, mpath, dpath, use_abs):
+        if use_abs:
+            self.spath = os.path.abspath(spath)
+            self.mpath = os.path.abspath(mpath)
+            self.dpath = os.path.abspath(dpath)
+        else:
+            self.spath = spath
+            self.mpath = mpath
+            self.dpath = dpath
+        self.spectogram_path = '{}/{}'.format(self.dpath, 'spectogram')
+
+    def _set_logger_level(self, log_level, warnings_suppress):
         if self.format is None:
-            self.format = '[ %(levelname)s ] :: [ %(name)s ] :: %(message)s'
+            self.format = '[%(levelname)-8s] :: [%(name)s ] :: %(message)s'
         logging.basicConfig(stream=sys.stdout, level=log_level, format=self.format, datefmt=None)
         logger = logging.getLogger(self.name)
+        logging.captureWarnings(capture=True)
+        if warnings_suppress:
+            warnings.filterwarnings("ignore")
         logger.setLevel(log_level)
         return logger
 
     def _is_valid_path(self, path):
-        if not os.path.exists(self.mpath):
-            self.logger.error("Invalid path: {}".format(self.mpath))
+        if not os.path.exists(path):
+            self.logger.error("Invalid path: {}".format(path))
             return False
         return True
 
@@ -40,8 +60,9 @@ class Mgi:
     
     def _create_if_not_exist(self, dpath):
         if not self._is_valid_path(dpath):
-            # TODO: create the dpath
-            pass
+            self.logger.debug("dpath: {} doesn't exist".format(dpath))
+            Path(dpath).mkdir(parents=True, exist_ok=True)
+            self.logger.debug("dpath: {} created".format(dpath))
 
     def read_metadata(self, filename):
         self.logger.debug("Checking the metadata path valid or not")
@@ -58,6 +79,11 @@ class Mgi:
         self.logger.info("Reading metadata using pandas")
         self.df = pd.read_csv(file_path, header=None, error_bad_lines=False)
 
+    def mini_meta(self):
+        # Expecting the enduser will override this method based on there need
+        # TODO: need to collect the important columns from full metadata.
+        pass
+
     def songs(self, path, songs_type='.mp3'):
         for dirpath, subdirs, files in os.walk(path):
             self.songs_pth.extend(os.path.join(dirpath, x) for x in files if x.endswith(songs_type))
@@ -68,11 +94,20 @@ class Mgi:
             self.logger.error("Exiting")
             return
 
+        # creating the data folder if not exist..!
         self._create_if_not_exist(self.dpath)
         self.logger.info("Reading songs using librosa")
         self.songs(self.spath)
-        for each in self.songs_pth:
-            print(each)
+
+        # creating the spectogram if not exist..!
+        self._create_if_not_exist(self.spectogram_path)
+
+        for each_song_path in self.songs_pth:
+            self.logger.debug(each_song_path)
+            y, sr = lb.load(each_song_path)
+            melspectrogram_ndarray = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,fmax=8000)
+            print(type(melspectrogram_ndarray))
+            break
             # TODO: need to read the librosa files
             # TODO: need to store the chromagrams
 
