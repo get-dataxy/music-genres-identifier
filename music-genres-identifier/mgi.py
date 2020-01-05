@@ -10,7 +10,6 @@ import warnings
 from pathlib import Path
 
 
-
 class Mgi:
     name = "MGI"
 

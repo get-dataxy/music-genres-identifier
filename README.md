@@ -20,7 +20,7 @@
 ## music genres identifier
 
 ```yml
-   commands    List all available pyenv commands
+   commands    List all available MGI commands
 ```
 
 ## Installation
@@ -66,7 +66,9 @@ music-genres-identifier was developed by [Kiran Kumar Kotari](https://github.com
 
 ## Reference
 
-[Music-Recommendation-Using-Deep-Learning](2)
+[FMA: A Dataset For Music Analysis](2)  
+[Music-Recommendation-Using-Deep-Learning](3)
 
 [1]: https://github.com/get-dataxy/music-genres-identifier
+[2]: https://github.com/mdeff/fma
 [2]: https://github.com/VikramShenoy97/Music-Recommendation-Using-Deep-Learning
